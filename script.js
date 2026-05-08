@@ -12,6 +12,8 @@ const parchmentBackgroundButton = document.querySelector("#parchmentBackgroundBu
 
 const background = new Image();
 background.src = "assets/content.png";
+const parchment = new Image();
+parchment.src = "assets/paper.png";
 
 const layers = [];
 let selectedId = null;
@@ -142,22 +144,22 @@ function seededNoise(seed) {
 
 function parchmentPath(x, y, size) {
   const random = seededNoise(20260508);
-  const step = size / 26;
+  const step = size / 44;
 
   ctx.beginPath();
   ctx.moveTo(x + random() * step, y + random() * step);
 
   for (let px = x; px <= x + size; px += step) {
-    ctx.lineTo(px, y + (random() - 0.5) * 15);
+    ctx.lineTo(px, y + (random() - 0.5) * 8);
   }
   for (let py = y; py <= y + size; py += step) {
-    ctx.lineTo(x + size + (random() - 0.5) * 15, py);
+    ctx.lineTo(x + size + (random() - 0.5) * 8, py);
   }
   for (let px = x + size; px >= x; px -= step) {
-    ctx.lineTo(px, y + size + (random() - 0.5) * 15);
+    ctx.lineTo(px, y + size + (random() - 0.5) * 8);
   }
   for (let py = y + size; py >= y; py -= step) {
-    ctx.lineTo(x + (random() - 0.5) * 15, py);
+    ctx.lineTo(x + (random() - 0.5) * 8, py);
   }
 
   ctx.closePath();
@@ -166,74 +168,13 @@ function parchmentPath(x, y, size) {
 function drawParchment() {
   const size = Math.min(canvas.width * 0.35, canvas.height * 0.64);
   const x = (canvas.width - size) / 2;
-  const y = (canvas.height - size) / 2 - canvas.height * 0.015;
+  const y = canvas.height * 0.14;
 
-  ctx.save();
-  ctx.shadowColor = "rgba(0, 0, 0, 0.72)";
-  ctx.shadowBlur = 28;
-  ctx.shadowOffsetY = 18;
-  parchmentPath(x, y, size);
-
-  const paperGradient = ctx.createRadialGradient(
-    x + size * 0.52,
-    y + size * 0.44,
-    size * 0.05,
-    x + size * 0.5,
-    y + size * 0.5,
-    size * 0.72,
-  );
-  paperGradient.addColorStop(0, "#f6e1c7");
-  paperGradient.addColorStop(0.58, "#d8b88c");
-  paperGradient.addColorStop(1, "#8b6840");
-  ctx.fillStyle = paperGradient;
-  ctx.fill();
-  ctx.clip();
-
-  ctx.shadowColor = "transparent";
-  ctx.globalAlpha = 0.45;
-  ctx.fillStyle = "#f8ead8";
-  ctx.fillRect(x + size * 0.08, y + size * 0.08, size * 0.84, size * 0.84);
-
-  const random = seededNoise(7331);
-  for (let i = 0; i < 1800; i += 1) {
-    const px = x + random() * size;
-    const py = y + random() * size;
-    const dot = random() * 2.4 + 0.35;
-    ctx.globalAlpha = random() * 0.18 + 0.06;
-    ctx.fillStyle = random() > 0.62 ? "#5c3f22" : "#fff0d7";
-    ctx.beginPath();
-    ctx.arc(px, py, dot, 0, Math.PI * 2);
-    ctx.fill();
+  if (!parchment.complete) {
+    return;
   }
 
-  ctx.globalAlpha = 0.12;
-  ctx.strokeStyle = "#61431f";
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 130; i += 1) {
-    const sx = x + random() * size;
-    const sy = y + random() * size;
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.bezierCurveTo(
-      sx + (random() - 0.5) * 54,
-      sy + (random() - 0.5) * 54,
-      sx + (random() - 0.5) * 92,
-      sy + (random() - 0.5) * 92,
-      sx + (random() - 0.5) * 120,
-      sy + (random() - 0.5) * 120,
-    );
-    ctx.stroke();
-  }
-
-  ctx.globalAlpha = 0.34;
-  ctx.lineWidth = 28;
-  ctx.strokeStyle = "#5f4122";
-  ctx.strokeRect(x + 12, y + 12, size - 24, size - 24);
-  ctx.globalAlpha = 0.18;
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = "#fff0d9";
-  ctx.strokeRect(x + 28, y + 28, size - 56, size - 56);
-  ctx.restore();
+  ctx.drawImage(parchment, 540, 120, 593, 627, x, y, size, size);
 }
 
 function updateBackgroundButtons() {
@@ -314,6 +255,8 @@ background.onload = () => {
   canvas.height = background.naturalHeight || 1080;
   render();
 };
+
+parchment.onload = () => render();
 
 imageInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
