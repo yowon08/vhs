@@ -7,6 +7,8 @@ const deleteButton = document.querySelector("#deleteButton");
 const textInput = document.querySelector("#textInput");
 const fontSizeInput = document.querySelector("#fontSizeInput");
 const colorInput = document.querySelector("#colorInput");
+const weatheringInput = document.querySelector("#weatheringInput");
+const weatheringValue = document.querySelector("#weatheringValue");
 const basicBackgroundButton = document.querySelector("#basicBackgroundButton");
 const parchmentBackgroundButton = document.querySelector("#parchmentBackgroundButton");
 
@@ -20,6 +22,7 @@ let selectedId = null;
 let dragState = null;
 let nextId = 1;
 let backgroundPreset = "basic";
+let weatheringAmount = 0;
 
 function selectedLayer() {
   return layers.find((layer) => layer.id === selectedId) || null;
@@ -139,6 +142,83 @@ function updateBackgroundButtons() {
   parchmentBackgroundButton.classList.toggle("active", backgroundPreset === "parchment");
 }
 
+function randomFromSeed(seed) {
+  let value = seed;
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return value / 4294967296;
+  };
+}
+
+function applyDigitalWeathering(amount) {
+  if (amount <= 0) {
+    return;
+  }
+
+  const strength = amount / 100;
+  const lowCanvas = document.createElement("canvas");
+  const lowCtx = lowCanvas.getContext("2d");
+  const scale = 1 - strength * 0.42;
+  lowCanvas.width = Math.max(120, Math.round(canvas.width * scale));
+  lowCanvas.height = Math.max(68, Math.round(canvas.height * scale));
+
+  lowCtx.imageSmoothingEnabled = true;
+  lowCtx.drawImage(canvas, 0, 0, lowCanvas.width, lowCanvas.height);
+
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = strength < 0.55;
+  ctx.drawImage(lowCanvas, 0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation = "overlay";
+  ctx.globalAlpha = strength * 0.16;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.globalCompositeOperation = "color-burn";
+  ctx.globalAlpha = strength * 0.78;
+  ctx.fillStyle = "rgb(230, 225, 170)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  const random = randomFromSeed(9409);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const noiseAmount = 58 * strength;
+  const channelShift = Math.round(14 * strength);
+
+  for (let index = 0; index < data.length; index += 4) {
+    const noise = (random() - 0.5) * noiseAmount;
+    data[index] = Math.max(0, Math.min(255, data[index] + noise + channelShift));
+    data[index + 1] = Math.max(0, Math.min(255, data[index + 1] + noise * 0.65));
+    data[index + 2] = Math.max(0, Math.min(255, data[index + 2] + noise - channelShift));
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  ctx.save();
+  ctx.globalAlpha = strength * 0.22;
+  ctx.fillStyle = "#000";
+  const lineGap = Math.max(3, Math.round(9 - strength * 5));
+  for (let y = 0; y < canvas.height; y += lineGap) {
+    ctx.fillRect(0, y, canvas.width, 1);
+  }
+
+  ctx.globalAlpha = strength * 0.16;
+  const blockSize = Math.round(18 + strength * 34);
+  for (let i = 0; i < 80 * strength; i += 1) {
+    const sourceX = Math.floor(random() * canvas.width);
+    const sourceY = Math.floor(random() * canvas.height);
+    const width = Math.floor(blockSize * (0.5 + random()));
+    const height = Math.floor((blockSize / 4) * (0.5 + random()));
+    const offset = Math.floor((random() - 0.5) * 34 * strength);
+    ctx.drawImage(canvas, sourceX, sourceY, width, height, sourceX + offset, sourceY, width, height);
+  }
+  ctx.restore();
+}
+
 function render(includeSelection = true) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const activeBackground = backgroundPreset === "parchment" ? parchmentBackground : background;
@@ -151,6 +231,8 @@ function render(includeSelection = true) {
       drawTextLayer(layer);
     }
   });
+
+  applyDigitalWeathering(weatheringAmount);
 
   const layer = selectedLayer();
   if (includeSelection && layer) {
@@ -266,6 +348,12 @@ colorInput.addEventListener("input", () => {
     layer.color = colorInput.value;
     render();
   }
+});
+
+weatheringInput.addEventListener("input", () => {
+  weatheringAmount = Number(weatheringInput.value);
+  weatheringValue.textContent = weatheringAmount;
+  render();
 });
 
 canvas.addEventListener("pointerdown", (event) => {

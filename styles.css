@@ -91,6 +91,10 @@ label {
   font-size: 14px;
 }
 
+label span {
+  color: #f2d46b;
+}
+
 input[type="text"] {
   width: 100%;
   min-height: 42px;
