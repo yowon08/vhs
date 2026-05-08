@@ -18,7 +18,7 @@ const alignRightButton = document.querySelector("#alignRightButton");
 const background = new Image();
 background.src = "assets/content.png";
 const parchmentBackground = new Image();
-parchmentBackground.src = "assets/vhs-image_2.png";
+parchmentBackground.src = "assets/content2.png";
 
 const layers = [];
 let selectedId = null;
