@@ -7,6 +7,8 @@ const deleteButton = document.querySelector("#deleteButton");
 const textInput = document.querySelector("#textInput");
 const fontSizeInput = document.querySelector("#fontSizeInput");
 const colorInput = document.querySelector("#colorInput");
+const basicBackgroundButton = document.querySelector("#basicBackgroundButton");
+const parchmentBackgroundButton = document.querySelector("#parchmentBackgroundButton");
 
 const background = new Image();
 background.src = "assets/content.png";
@@ -15,6 +17,7 @@ const layers = [];
 let selectedId = null;
 let dragState = null;
 let nextId = 1;
+let backgroundPreset = "basic";
 
 function selectedLayer() {
   return layers.find((layer) => layer.id === selectedId) || null;
@@ -129,9 +132,122 @@ function drawTextLayer(layer) {
   ctx.restore();
 }
 
+function seededNoise(seed) {
+  let value = seed;
+  return () => {
+    value = (value * 1664525 + 1013904223) % 4294967296;
+    return value / 4294967296;
+  };
+}
+
+function parchmentPath(x, y, size) {
+  const random = seededNoise(20260508);
+  const step = size / 26;
+
+  ctx.beginPath();
+  ctx.moveTo(x + random() * step, y + random() * step);
+
+  for (let px = x; px <= x + size; px += step) {
+    ctx.lineTo(px, y + (random() - 0.5) * 15);
+  }
+  for (let py = y; py <= y + size; py += step) {
+    ctx.lineTo(x + size + (random() - 0.5) * 15, py);
+  }
+  for (let px = x + size; px >= x; px -= step) {
+    ctx.lineTo(px, y + size + (random() - 0.5) * 15);
+  }
+  for (let py = y + size; py >= y; py -= step) {
+    ctx.lineTo(x + (random() - 0.5) * 15, py);
+  }
+
+  ctx.closePath();
+}
+
+function drawParchment() {
+  const size = Math.min(canvas.width * 0.35, canvas.height * 0.64);
+  const x = (canvas.width - size) / 2;
+  const y = (canvas.height - size) / 2 - canvas.height * 0.015;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0, 0, 0, 0.72)";
+  ctx.shadowBlur = 28;
+  ctx.shadowOffsetY = 18;
+  parchmentPath(x, y, size);
+
+  const paperGradient = ctx.createRadialGradient(
+    x + size * 0.52,
+    y + size * 0.44,
+    size * 0.05,
+    x + size * 0.5,
+    y + size * 0.5,
+    size * 0.72,
+  );
+  paperGradient.addColorStop(0, "#f6e1c7");
+  paperGradient.addColorStop(0.58, "#d8b88c");
+  paperGradient.addColorStop(1, "#8b6840");
+  ctx.fillStyle = paperGradient;
+  ctx.fill();
+  ctx.clip();
+
+  ctx.shadowColor = "transparent";
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = "#f8ead8";
+  ctx.fillRect(x + size * 0.08, y + size * 0.08, size * 0.84, size * 0.84);
+
+  const random = seededNoise(7331);
+  for (let i = 0; i < 1800; i += 1) {
+    const px = x + random() * size;
+    const py = y + random() * size;
+    const dot = random() * 2.4 + 0.35;
+    ctx.globalAlpha = random() * 0.18 + 0.06;
+    ctx.fillStyle = random() > 0.62 ? "#5c3f22" : "#fff0d7";
+    ctx.beginPath();
+    ctx.arc(px, py, dot, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 0.12;
+  ctx.strokeStyle = "#61431f";
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 130; i += 1) {
+    const sx = x + random() * size;
+    const sy = y + random() * size;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.bezierCurveTo(
+      sx + (random() - 0.5) * 54,
+      sy + (random() - 0.5) * 54,
+      sx + (random() - 0.5) * 92,
+      sy + (random() - 0.5) * 92,
+      sx + (random() - 0.5) * 120,
+      sy + (random() - 0.5) * 120,
+    );
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha = 0.34;
+  ctx.lineWidth = 28;
+  ctx.strokeStyle = "#5f4122";
+  ctx.strokeRect(x + 12, y + 12, size - 24, size - 24);
+  ctx.globalAlpha = 0.18;
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "#fff0d9";
+  ctx.strokeRect(x + 28, y + 28, size - 56, size - 56);
+  ctx.restore();
+}
+
+function updateBackgroundButtons() {
+  basicBackgroundButton.classList.toggle("active", backgroundPreset === "basic");
+  parchmentBackgroundButton.classList.toggle("active", backgroundPreset === "parchment");
+}
+
 function render(includeSelection = true) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+  if (backgroundPreset === "parchment") {
+    drawParchment();
+  }
 
   layers.forEach((layer) => {
     if (layer.type === "image") {
@@ -208,6 +324,18 @@ imageInput.addEventListener("change", (event) => {
 });
 
 addTextButton.addEventListener("click", addTextLayer);
+
+basicBackgroundButton.addEventListener("click", () => {
+  backgroundPreset = "basic";
+  updateBackgroundButtons();
+  render();
+});
+
+parchmentBackgroundButton.addEventListener("click", () => {
+  backgroundPreset = "parchment";
+  updateBackgroundButtons();
+  render();
+});
 
 deleteButton.addEventListener("click", () => {
   const index = layers.findIndex((layer) => layer.id === selectedId);
@@ -313,4 +441,5 @@ downloadButton.addEventListener("click", () => {
 });
 
 document.fonts?.ready.then(() => render());
+updateBackgroundButtons();
 syncControls();

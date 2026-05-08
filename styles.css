@@ -134,6 +134,29 @@ button:hover,
   border-color: #f2d46b;
 }
 
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  background: #111;
+  border: 1px solid #484331;
+  border-radius: 8px;
+}
+
+.segmented button {
+  min-height: 36px;
+  border-color: transparent;
+  background: transparent;
+  color: #d5ceb8;
+}
+
+.segmented button.active {
+  color: #15140f;
+  background: #f2d46b;
+  border-color: #f2d46b;
+}
+
 .primary {
   color: #15140f;
   background: #f2d46b;
