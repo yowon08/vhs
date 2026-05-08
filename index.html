@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VHS Image Editor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <aside class="panel" aria-label="VHS image editor controls">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <h1>VHS Editor</h1>
+            <p>이미지와 텍스트를 얹어 바로 저장</p>
+          </div>
+        </div>
+
+        <section class="control-group">
+          <h2>레이어 추가</h2>
+          <label class="file-button">
+            이미지 삽입
+            <input id="imageInput" type="file" accept="image/*" />
+          </label>
+          <button id="addTextButton" type="button">텍스트 삽입</button>
+        </section>
+
+        <section class="control-group">
+          <h2>선택 항목</h2>
+          <label>
+            텍스트
+            <input id="textInput" type="text" value="VHS TEXT" />
+          </label>
+          <label>
+            글자 크기
+            <input id="fontSizeInput" type="range" min="24" max="220" step="2" value="72" />
+          </label>
+          <label>
+            색상
+            <input id="colorInput" type="color" value="#ffffff" />
+          </label>
+          <button id="deleteButton" type="button">선택 삭제</button>
+        </section>
+
+        <section class="control-group">
+          <h2>출력</h2>
+          <button id="downloadButton" class="primary" type="button">이미지 다운로드</button>
+        </section>
+      </aside>
+
+      <section class="workspace" aria-label="editor canvas">
+        <div class="canvas-shell">
+          <canvas id="editorCanvas" width="1920" height="1080"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
