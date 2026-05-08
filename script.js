@@ -11,6 +11,9 @@ const weatheringInput = document.querySelector("#weatheringInput");
 const weatheringValue = document.querySelector("#weatheringValue");
 const basicBackgroundButton = document.querySelector("#basicBackgroundButton");
 const parchmentBackgroundButton = document.querySelector("#parchmentBackgroundButton");
+const alignLeftButton = document.querySelector("#alignLeftButton");
+const alignCenterButton = document.querySelector("#alignCenterButton");
+const alignRightButton = document.querySelector("#alignRightButton");
 
 const background = new Image();
 background.src = "assets/content.png";
@@ -28,6 +31,15 @@ function selectedLayer() {
   return layers.find((layer) => layer.id === selectedId) || null;
 }
 
+function updateAlignmentButtons(align = "left", enabled = false) {
+  [alignLeftButton, alignCenterButton, alignRightButton].forEach((button) => {
+    button.disabled = !enabled;
+  });
+  alignLeftButton.classList.toggle("active", enabled && align === "left");
+  alignCenterButton.classList.toggle("active", enabled && align === "center");
+  alignRightButton.classList.toggle("active", enabled && align === "right");
+}
+
 function syncControls() {
   const layer = selectedLayer();
   const isText = layer?.type === "text";
@@ -36,6 +48,7 @@ function syncControls() {
   fontSizeInput.disabled = !isText;
   colorInput.disabled = !isText;
   deleteButton.disabled = !layer;
+  updateAlignmentButtons(layer?.align || "left", isText);
 
   if (isText) {
     textInput.value = layer.text;
@@ -70,8 +83,15 @@ function measureLayer(layer) {
 
 function layerBounds(layer) {
   const size = measureLayer(layer);
+  const x =
+    layer.type === "text" && layer.align === "center"
+      ? layer.x - size.width / 2
+      : layer.type === "text" && layer.align === "right"
+        ? layer.x - size.width
+        : layer.x;
+
   return {
-    x: layer.x,
+    x,
     y: layer.y,
     width: size.width,
     height: size.height,
@@ -128,6 +148,7 @@ function drawTextLayer(layer) {
   ctx.save();
   ctx.font = `${layer.fontSize}px DungGeunMo, monospace`;
   ctx.textBaseline = "top";
+  ctx.textAlign = layer.align || "left";
   ctx.fillStyle = layer.color;
   ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
   ctx.shadowBlur = 6;
@@ -279,6 +300,7 @@ function addTextLayer() {
     y: canvas.height * 0.78,
     fontSize: Number(fontSizeInput.value),
     color: colorInput.value,
+    align: "left",
   });
   selectedId = nextId;
   nextId += 1;
@@ -350,6 +372,28 @@ colorInput.addEventListener("input", () => {
   }
 });
 
+function setTextAlignment(align) {
+  const layer = selectedLayer();
+  if (layer?.type === "text") {
+    const bounds = layerBounds(layer);
+    layer.align = align;
+    const width = measureLayer(layer).width;
+    if (align === "center") {
+      layer.x = bounds.x + width / 2;
+    } else if (align === "right") {
+      layer.x = bounds.x + width;
+    } else {
+      layer.x = bounds.x;
+    }
+    updateAlignmentButtons(align, true);
+    render();
+  }
+}
+
+alignLeftButton.addEventListener("click", () => setTextAlignment("left"));
+alignCenterButton.addEventListener("click", () => setTextAlignment("center"));
+alignRightButton.addEventListener("click", () => setTextAlignment("right"));
+
 weatheringInput.addEventListener("input", () => {
   weatheringAmount = Number(weatheringInput.value);
   weatheringValue.textContent = weatheringAmount;
@@ -377,6 +421,7 @@ canvas.addEventListener("pointerdown", (event) => {
     startY: point.y,
     layerX: target.x,
     layerY: target.y,
+    boundsX: bounds.x,
     width: bounds.width,
     height: bounds.height,
     fontSize: target.fontSize || 0,
@@ -395,7 +440,8 @@ canvas.addEventListener("pointermove", (event) => {
   const layer = dragState.layer;
 
   if (dragState.mode === "move") {
-    layer.x = dragState.layerX + dx;
+    const boundsOffset = dragState.layerX - dragState.boundsX;
+    layer.x = dragState.boundsX + dx + boundsOffset;
     layer.y = dragState.layerY + dy;
   } else if (layer.type === "image") {
     const width = Math.max(40, dragState.width + dx);

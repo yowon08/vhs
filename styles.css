@@ -84,7 +84,8 @@ p {
   border-radius: 8px;
 }
 
-label {
+label,
+.field {
   display: grid;
   gap: 7px;
   color: #d5ceb8;
@@ -146,6 +147,10 @@ button:hover,
   background: #111;
   border: 1px solid #484331;
   border-radius: 8px;
+}
+
+.segmented.three {
+  grid-template-columns: 1fr 1fr 1fr;
 }
 
 .segmented button {
