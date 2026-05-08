@@ -12,8 +12,8 @@ const parchmentBackgroundButton = document.querySelector("#parchmentBackgroundBu
 
 const background = new Image();
 background.src = "assets/content.png";
-const parchment = new Image();
-parchment.src = "assets/paper.png";
+const parchmentBackground = new Image();
+parchmentBackground.src = "assets/vhs-image_2.png";
 
 const layers = [];
 let selectedId = null;
@@ -134,49 +134,6 @@ function drawTextLayer(layer) {
   ctx.restore();
 }
 
-function seededNoise(seed) {
-  let value = seed;
-  return () => {
-    value = (value * 1664525 + 1013904223) % 4294967296;
-    return value / 4294967296;
-  };
-}
-
-function parchmentPath(x, y, size) {
-  const random = seededNoise(20260508);
-  const step = size / 44;
-
-  ctx.beginPath();
-  ctx.moveTo(x + random() * step, y + random() * step);
-
-  for (let px = x; px <= x + size; px += step) {
-    ctx.lineTo(px, y + (random() - 0.5) * 8);
-  }
-  for (let py = y; py <= y + size; py += step) {
-    ctx.lineTo(x + size + (random() - 0.5) * 8, py);
-  }
-  for (let px = x + size; px >= x; px -= step) {
-    ctx.lineTo(px, y + size + (random() - 0.5) * 8);
-  }
-  for (let py = y + size; py >= y; py -= step) {
-    ctx.lineTo(x + (random() - 0.5) * 8, py);
-  }
-
-  ctx.closePath();
-}
-
-function drawParchment() {
-  const size = Math.min(canvas.width * 0.35, canvas.height * 0.64);
-  const x = (canvas.width - size) / 2;
-  const y = canvas.height * 0.14;
-
-  if (!parchment.complete) {
-    return;
-  }
-
-  ctx.drawImage(parchment, 540, 120, 593, 627, x, y, size, size);
-}
-
 function updateBackgroundButtons() {
   basicBackgroundButton.classList.toggle("active", backgroundPreset === "basic");
   parchmentBackgroundButton.classList.toggle("active", backgroundPreset === "parchment");
@@ -184,11 +141,8 @@ function updateBackgroundButtons() {
 
 function render(includeSelection = true) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-  if (backgroundPreset === "parchment") {
-    drawParchment();
-  }
+  const activeBackground = backgroundPreset === "parchment" ? parchmentBackground : background;
+  ctx.drawImage(activeBackground, 0, 0, canvas.width, canvas.height);
 
   layers.forEach((layer) => {
     if (layer.type === "image") {
@@ -256,7 +210,7 @@ background.onload = () => {
   render();
 };
 
-parchment.onload = () => render();
+parchmentBackground.onload = () => render();
 
 imageInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
