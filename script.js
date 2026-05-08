@@ -65,6 +65,14 @@ function canvasPoint(event) {
   };
 }
 
+function textLines(text) {
+  return String(text || " ").split(/\r?\n/);
+}
+
+function textLineHeight(layer) {
+  return layer.fontSize * 1.18;
+}
+
 function measureLayer(layer) {
   if (layer.type === "image") {
     return { width: layer.width, height: layer.height };
@@ -72,12 +80,13 @@ function measureLayer(layer) {
 
   ctx.save();
   ctx.font = `${layer.fontSize}px DungGeunMo, monospace`;
-  const metrics = ctx.measureText(layer.text);
+  const lines = textLines(layer.text);
+  const width = lines.reduce((max, line) => Math.max(max, ctx.measureText(line || " ").width), 20);
   ctx.restore();
 
   return {
-    width: Math.max(metrics.width, 20),
-    height: layer.fontSize,
+    width,
+    height: Math.max(layer.fontSize, lines.length * textLineHeight(layer)),
   };
 }
 
@@ -154,7 +163,9 @@ function drawTextLayer(layer) {
   ctx.shadowBlur = 6;
   ctx.shadowOffsetX = 4;
   ctx.shadowOffsetY = 4;
-  ctx.fillText(layer.text, layer.x, layer.y);
+  textLines(layer.text).forEach((line, index) => {
+    ctx.fillText(line || " ", layer.x, layer.y + index * textLineHeight(layer));
+  });
   ctx.restore();
 }
 

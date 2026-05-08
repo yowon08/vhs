@@ -96,7 +96,8 @@ label span {
   color: #f2d46b;
 }
 
-input[type="text"] {
+input[type="text"],
+textarea {
   width: 100%;
   min-height: 42px;
   padding: 10px 11px;
@@ -104,6 +105,11 @@ input[type="text"] {
   background: #111;
   border: 1px solid #484331;
   border-radius: 6px;
+}
+
+textarea {
+  min-height: 76px;
+  resize: vertical;
 }
 
 input[type="range"] {
